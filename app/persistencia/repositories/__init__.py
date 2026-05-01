@@ -1,0 +1,3 @@
+from app.persistencia.repositories.analysis_repository import AnalysisRepository
+from app.persistencia.repositories.user_repository import UserRepository
+
