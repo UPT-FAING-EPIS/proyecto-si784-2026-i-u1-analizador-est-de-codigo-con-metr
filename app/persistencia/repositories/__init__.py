@@ -1,0 +1,2 @@
+from app.persistencia.repositories.analysis_repository import AnalysisRepository
+
