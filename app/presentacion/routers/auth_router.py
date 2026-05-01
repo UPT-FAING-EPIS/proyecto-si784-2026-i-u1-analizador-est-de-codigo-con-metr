@@ -1,3 +1,4 @@
+import bcrypt
 from typing import Any
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status
@@ -48,3 +49,35 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Error al crear el usuario. El nombre de usuario podría estar duplicado.",
         )
+
+
+@router.post("/login")
+async def login(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    repository = UserRepository(db)
+    user = repository.get_user_by_username(username)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+        )
+
+    is_valid_password = bcrypt.checkpw(
+        password.encode("utf-8"),
+        user.password_hash.encode("utf-8"),
+    )
+    if not is_valid_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+        )
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "role": user.role,
+    }
