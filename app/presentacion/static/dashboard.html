@@ -56,6 +56,13 @@
       font-size: 0.85rem;
       font-weight: 600;
     }
+
+    .info-tip {
+      cursor: help;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-left: 0.25rem;
+    }
   </style>
 </head>
 <body>
@@ -97,12 +104,117 @@
 
     <section class="glass-card p-4">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h2 class="h5 mb-0">Evolución de Deuda Técnica (Complejidad)</h2>
+        <h2 class="h5 mb-0">Evolución de Deuda Técnica (Complejidad)
+          <span
+            class="info-tip"
+            data-bs-toggle="tooltip"
+            title="Evolución histórica de LOC y complejidad por análisis."
+            aria-label="Información del gráfico histórico"
+          >ℹ️</span>
+        </h2>
         <button id="refresh-history" class="btn btn-outline-secondary btn-sm" type="button">Actualizar</button>
       </div>
-      <div class="chart-box">
-        <canvas id="historyChart"></canvas>
+
+      <!-- Métricas principales en tarjetas -->
+      <div class="row g-3 mb-4" id="metrics-cards">
+        <div class="col-6 col-md-3">
+          <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+              <h6 class="card-title">NOM
+                <span
+                  class="info-tip"
+                  data-bs-toggle="tooltip"
+                  title="Número Total de Métodos detectados en el código."
+                  aria-label="Información NOM"
+                >ℹ️</span>
+              </h6>
+              <p class="card-text display-6 mb-0" id="metric-nom">0</p>
+              <small class="text-white-50">Número de métodos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-white bg-success h-100">
+            <div class="card-body">
+              <h6 class="card-title">NPM
+                <span
+                  class="info-tip"
+                  data-bs-toggle="tooltip"
+                  title="Número de Métodos Públicos (modificador public)."
+                  aria-label="Información NPM"
+                >ℹ️</span>
+              </h6>
+              <p class="card-text display-6 mb-0" id="metric-npm">0</p>
+              <small class="text-white-50">Métodos públicos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-white bg-warning h-100">
+            <div class="card-body">
+              <h6 class="card-title">NOA
+                <span
+                  class="info-tip"
+                  data-bs-toggle="tooltip"
+                  title="Número de Atributos/Campos declarados en la clase."
+                  aria-label="Información NOA"
+                >ℹ️</span>
+              </h6>
+              <p class="card-text display-6 mb-0" id="metric-noa">0</p>
+              <small class="text-white-50">Número de atributos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card text-white bg-danger h-100">
+            <div class="card-body">
+              <h6 class="card-title">CLOC
+                <span
+                  class="info-tip"
+                  data-bs-toggle="tooltip"
+                  title="Líneas de Comentario detectadas en el archivo."
+                  aria-label="Información CLOC"
+                >ℹ️</span>
+              </h6>
+              <p class="card-text display-6 mb-0" id="metric-cloc">0</p>
+              <small class="text-white-50">Líneas de comentario</small>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- Gráficos: principal (líneas) y secundario (barras) -->
+      <div class="row gy-4">
+        <div class="col-12 col-lg-8">
+          <div class="d-flex align-items-center gap-1 mb-2">
+            <h3 class="h6 mb-0">Histórico LOC vs Complejidad</h3>
+            <span
+              class="info-tip"
+              data-bs-toggle="tooltip"
+              title="Gráfico de líneas de la evolución temporal por análisis."
+              aria-label="Información gráfico histórico"
+            >ℹ️</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="historyChart"></canvas>
+          </div>
+        </div>
+        <div class="col-12 col-lg-4">
+          <div class="d-flex align-items-center gap-1 mb-2">
+            <h3 class="h6 mb-0">Estructura del Último Análisis</h3>
+            <span
+              class="info-tip"
+              data-bs-toggle="tooltip"
+              title="Compara NOM (métodos), NPM (públicos) y NOA (atributos) del análisis más reciente."
+              aria-label="Información gráfico de barras"
+            >ℹ️</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="structureChart"></canvas>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-3">
         <button id="export-csv" class="btn btn-success" type="button">Exportar Historial a CSV</button>
       </div>
@@ -110,6 +222,11 @@
     </section>
   </div>
 
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script>
     const userId = localStorage.getItem("user_id");
@@ -128,6 +245,7 @@
     const logoutButton = document.getElementById("logout-button");
 
     let historyChartInstance = null;
+    let structureChartInstance = null;
     let historyReportsCache = [];
 
     function showStatus(target, message, type) {
@@ -200,10 +318,12 @@
 
     function drawHistoryChart(reports) {
       const sortedReports = [...reports].sort((a, b) => new Date(a.analysis_date) - new Date(b.analysis_date));
-      const labels = sortedReports.map((report) => {
+      const fechas = sortedReports.map((report) => {
         const date = new Date(report.analysis_date);
         return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
       });
+      const projectNames = sortedReports.map((report) => report.project_name || "Sin nombre");
+      const labels = fechas;
       const complexityValues = sortedReports.map((report) => report.complexity);
       const locValues = sortedReports.map((report) => report.loc);
 
@@ -254,6 +374,12 @@
             tooltip: {
               mode: "index",
               intersect: false,
+              callbacks: {
+                title(context) {
+                  const idx = context[0]?.dataIndex ?? 0;
+                  return `Archivo: ${projectNames[idx]} (${fechas[idx]})`;
+                },
+              },
             },
           },
           scales: {
@@ -286,12 +412,90 @@
       });
     }
 
+    function renderStructureFromLast(reports) {
+      try {
+        const sorted = [...reports].sort((a, b) => new Date(a.analysis_date) - new Date(b.analysis_date));
+        if (sorted.length === 0) {
+          document.getElementById('metric-nom').textContent = '0';
+          document.getElementById('metric-npm').textContent = '0';
+          document.getElementById('metric-noa').textContent = '0';
+          document.getElementById('metric-cloc').textContent = '0';
+          if (structureChartInstance) { structureChartInstance.destroy(); structureChartInstance = null; }
+          return;
+        }
+
+        const last = sorted[sorted.length - 1];
+        let metrics = { nom: 0, npm: 0, noa: 0, cloc: 0 };
+        try {
+          const cs = last.code_smells ?? last.code_smells_payload ?? {};
+          let mp = cs;
+          if (typeof cs === 'string') {
+            try { mp = JSON.parse(cs); } catch (e) { mp = {}; }
+          }
+          if (mp && mp.metrics) {
+            metrics.nom = Number(mp.metrics.nom ?? 0);
+            metrics.npm = Number(mp.metrics.npm ?? 0);
+            metrics.noa = Number(mp.metrics.noa ?? 0);
+            metrics.cloc = Number(mp.metrics.cloc ?? 0);
+          } else if (last.code_smells && last.code_smells.metrics) {
+            metrics.nom = Number(last.code_smells.metrics.nom ?? 0);
+            metrics.npm = Number(last.code_smells.metrics.npm ?? 0);
+            metrics.noa = Number(last.code_smells.metrics.noa ?? 0);
+            metrics.cloc = Number(last.code_smells.metrics.cloc ?? 0);
+          }
+        } catch (e) {
+        }
+
+        document.getElementById('metric-nom').textContent = String(metrics.nom);
+        document.getElementById('metric-npm').textContent = String(metrics.npm);
+        document.getElementById('metric-noa').textContent = String(metrics.noa);
+        document.getElementById('metric-cloc').textContent = String(metrics.cloc);
+
+        const ctx = document.getElementById('structureChart').getContext('2d');
+        const labels = ['NOM', 'NPM', 'NOA'];
+        const data = [metrics.nom, metrics.npm, metrics.noa];
+
+        if (structureChartInstance) {
+          structureChartInstance.destroy();
+        }
+
+        structureChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Estructura (último análisis)',
+              data,
+              backgroundColor: ['#0d6efd', '#198754', '#ffc107'],
+              borderColor: ['#0b5ed7', '#157347', '#e0a800'],
+              borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false },
+            },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: 'Cantidad' } },
+              x: { title: { display: true, text: 'Métrica' } },
+            },
+          },
+        });
+      } catch (err) {
+        console.error('Error renderStructureFromLast', err);
+      }
+    }
+
     async function loadHistoryAndRender() {
       try {
         clearStatus(historyStatus);
         const reports = await fetchHistoryData();
         historyReportsCache = reports;
         drawHistoryChart(reports);
+        renderStructureFromLast(reports);
 
         if (reports.length === 0) {
           showStatus(historyStatus, "Aún no hay reportes para este usuario.", "info");
@@ -345,6 +549,14 @@
       window.location.href = "/";
     });
 
+    function initBootstrapTooltips() {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      tooltipTriggerList.forEach((tooltipTriggerEl) => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    }
+
+    initBootstrapTooltips();
     loadHistoryAndRender();
   </script>
 </body>

@@ -23,8 +23,17 @@ class AnalysisCoordinator:
         complexity = int(analysis.get("complexity", 0))
         code_smells = analysis.get("code_smells", [])
 
-        # El repositorio espera un dict para el campo JSON; empaquetamos la lista
-        code_smells_payload: Dict[str, Any] = {"smells": code_smells}
+        # nuevas métricas estructurales devueltas por analyze_java_code
+        nom = int(analysis.get("nom", 0))
+        npm = int(analysis.get("npm", 0))
+        noa = int(analysis.get("noa", 0))
+        cloc = int(analysis.get("cloc", 0))
+
+        # Empaquetar smells y métricas en el payload JSON esperado por el repositorio
+        code_smells_payload: Dict[str, Any] = {
+            "smells": code_smells,
+            "metrics": {"nom": nom, "npm": npm, "noa": noa, "cloc": cloc},
+        }
 
         report = self.repository.create_report(
             user_id=user_id,

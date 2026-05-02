@@ -25,6 +25,10 @@ def analyze_java_code(code_string: str) -> Dict[str, Any]:
 
     complexity = 0
     code_smells: List[str] = []
+    # métricas estructurales nuevas
+    nom = 0  # Number of Methods (NOM)
+    npm = 0  # Number of Public Methods (NPM)
+    noa = 0  # Number of Attributes (NOA)
     method_count = 0
 
     # Intentamos parsear con javalang y contar nodos AST relevantes
@@ -45,10 +49,24 @@ def analyze_java_code(code_string: str) -> Dict[str, Any]:
         # contar declaraciones de método y detectar parámetros largos
         for _, node in cu.filter(javalang.tree.MethodDeclaration):
             method_count += 1
+            nom += 1
             params = getattr(node, "parameters", []) or []
+            modifiers = getattr(node, "modifiers", []) or []
+            if "public" in modifiers:
+                npm += 1
             if len(params) > 5:
                 name = getattr(node, "name", "<anonymous>")
                 code_smells.append(f"Long Parameter List en método: {name}")
+        # contar declaraciones de campos/atributos
+        for _, node in cu.filter(javalang.tree.FieldDeclaration):
+            noa += 1
+        # contar líneas de comentario: buscar bloques /* */ y //
+        cloc = 0
+        # block comments
+        for match in re.findall(r"/\*.*?\*/", code_string, re.DOTALL):
+            cloc += match.count("\n") + 1
+        # single-line comments
+        cloc += sum(1 for line in code_string.splitlines() if "//" in line)
     except javalang.parser.JavaSyntaxError:
         # Si falla el parse, usar conteo simple por palabras clave como fallback
         lowered = code_string
@@ -59,7 +77,15 @@ def analyze_java_code(code_string: str) -> Dict[str, Any]:
             + lowered.count(" switch ")
             + lowered.count(" catch ")
         )
-        method_count = 0
+        # no podemos obtener AST, dejar métricas estructurales a cero
+        nom = 0
+        npm = 0
+        noa = 0
+        # contar comentarios como fallback
+        cloc = 0
+        for match in re.findall(r"/\*.*?\*/", code_string, re.DOTALL):
+            cloc += match.count("\n") + 1
+        cloc += sum(1 for line in code_string.splitlines() if "//" in line)
 
     # Detectar métodos largos (>50 LOC) mediante regex y balanceo de llaves
     method_pattern = re.compile(
@@ -93,5 +119,9 @@ def analyze_java_code(code_string: str) -> Dict[str, Any]:
         "loc": loc,
         "complexity": complexity,
         "method_count": method_count,
+        "nom": nom,
+        "npm": npm,
+        "noa": noa,
+        "cloc": cloc,
         "code_smells": code_smells,
     }
