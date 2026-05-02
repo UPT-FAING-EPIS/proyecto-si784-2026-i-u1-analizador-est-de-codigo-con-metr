@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
@@ -34,10 +35,16 @@ async def upload_code_analysis(
 
     # Procesar y guardar el análisis
     # El nombre del proyecto es el nombre del archivo sin extensión
-    project_name = file.filename.split(".")[0] if file.filename else "unnamed_project"
+    filename = file.filename or "unnamed_project"
+    project_name, file_extension = os.path.splitext(filename)
+    project_name = project_name or "unnamed_project"
+    file_extension = file_extension.lower()
 
-    report = coordinator.process_and_save_java_code(
-        user_id=user_id, project_name=project_name, code_string=code_string
+    report = coordinator.process_and_save_code(
+        user_id=user_id,
+        project_name=project_name,
+        code_string=code_string,
+        file_extension=file_extension,
     )
 
     # Convertir el reporte a dict para la respuesta JSON

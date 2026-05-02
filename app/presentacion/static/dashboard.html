@@ -81,22 +81,88 @@
     </header>
 
     <section class="glass-card p-4 mb-4">
-      <h2 class="h5 mb-3">Subir Código Java</h2>
+      <h2 class="h5 mb-3">Subir Código para Análisis</h2>
       <form id="upload-form" class="row g-3" novalidate>
         <div class="col-md-9">
-          <label for="code-file" class="form-label">Archivo .java</label>
+          <label for="code-file" class="form-label">Archivo (.java, .cs, .py)</label>
           <input
             id="code-file"
             name="file"
             class="form-control"
             type="file"
-            accept=".java"
+            accept=".java, .cs, .py"
             required
           />
           <div class="form-text">Se enviará a /api/analysis/upload para análisis y persistencia.</div>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
+        <div class="col-md-3 d-flex flex-column gap-2 justify-content-end">
           <button id="upload-button" class="btn btn-primary w-100" type="submit">Analizar y Guardar</button>
+          <div class="dropdown w-100">
+            <button
+              class="btn btn-outline-secondary dropdown-toggle w-100"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Descargar Ejemplos
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end w-100">
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/analizador_trafico.py" download>
+                  <span><span class="me-2">🐍</span>analizador_trafico.py</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/ClienteDTO.cs" download>
+                  <span><span class="me-2">#️⃣</span>ClienteDTO.cs</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/ControladorPagos.cs" download>
+                  <span><span class="me-2">#️⃣</span>ControladorPagos.cs</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/DeudaTecnica.java" download>
+                  <span><span class="me-2">☕</span>DeudaTecnica.java</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/ProcesadorNomina.cs" download>
+                  <span><span class="me-2">#️⃣</span>ProcesadorNomina.cs</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/Prueba.java" download>
+                  <span><span class="me-2">☕</span>Prueba.java</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/SistemaMonolitico.java" download>
+                  <span><span class="me-2">☕</span>SistemaMonolitico.java</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/UsuarioDTO.java" download>
+                  <span><span class="me-2">☕</span>UsuarioDTO.java</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center gap-3" href="/examples/ValidadorSeguridad.java" download>
+                  <span><span class="me-2">☕</span>ValidadorSeguridad.java</span>
+                  <span class="text-muted small">Descargar</span>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </form>
       <div id="upload-status" class="mt-3"></div>
@@ -510,12 +576,15 @@
 
       const selectedFile = codeFileInput.files[0];
       if (!selectedFile) {
-        showStatus(uploadStatus, "Selecciona un archivo .java para continuar.", "warning");
+        showStatus(uploadStatus, "Selecciona un archivo .java, .cs o .py para continuar.", "warning");
         return;
       }
 
-      if (!selectedFile.name.toLowerCase().endsWith(".java")) {
-        showStatus(uploadStatus, "Solo se permiten archivos .java.", "warning");
+      const allowedExtensions = [".java", ".cs", ".py"];
+      const fileName = selectedFile.name.toLowerCase();
+      const isAllowed = allowedExtensions.some((ext) => fileName.endsWith(ext));
+      if (!isAllowed) {
+        showStatus(uploadStatus, "Solo se permiten archivos .java, .cs o .py", "warning");
         return;
       }
 

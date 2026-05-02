@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from app.motor_analisis.services import analyze_java_code
+from app.motor_analisis.services import analyze_code
 from app.persistencia.models.models import AnalysisReport
 from app.persistencia.repositories import AnalysisRepository
 
@@ -9,21 +9,25 @@ class AnalysisCoordinator:
     def __init__(self, repository: AnalysisRepository) -> None:
         self.repository = repository
 
-    def process_and_save_java_code(
-        self, user_id: int, project_name: str, code_string: str
+    def process_and_save_code(
+        self,
+        user_id: int,
+        project_name: str,
+        code_string: str,
+        file_extension: str,
     ) -> AnalysisReport:
-        """Procesa código Java, guarda el resultado y devuelve el reporte creado.
+        """Procesa código fuente, guarda el resultado y devuelve el reporte creado.
 
-        - Analiza el código usando `analyze_java_code`.
+        - Analiza el código usando `analyze_code`.
         - Crea y persiste el `AnalysisReport` mediante el repositorio.
         """
-        analysis = analyze_java_code(code_string)
+        analysis = analyze_code(code_string, extension=file_extension)
 
         loc = int(analysis.get("loc", 0))
         complexity = int(analysis.get("complexity", 0))
         code_smells = analysis.get("code_smells", [])
 
-        # nuevas métricas estructurales devueltas por analyze_java_code
+        # nuevas métricas estructurales devueltas por analyze_code
         nom = int(analysis.get("nom", 0))
         npm = int(analysis.get("npm", 0))
         noa = int(analysis.get("noa", 0))

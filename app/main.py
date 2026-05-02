@@ -9,6 +9,11 @@ from app.presentacion.routers.auth_router import router as auth_router
 app = FastAPI(title="Analizador Estático de Código")
 
 app.mount("/static", StaticFiles(directory="app/presentacion/static"), name="static")
+app.mount(
+    "/examples",
+    StaticFiles(directory="app/presentacion/static/examples"),
+    name="examples",
+)
 
 # Crear las tablas en la base de datos al iniciar
 Base.metadata.create_all(bind=engine)
